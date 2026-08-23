@@ -12,6 +12,11 @@ typedef struct {
     size_t ndim;          /* Numero di dimensioni */
     size_t total_size;    /* Numero totale di elementi */
     int ref_count;        /* Contatore di riferimenti */
+
+    void *mmap_base;
+    size_t mmap_size;
+    int owns_data;
+
 } Tensor;
 
 // Enum Tipi gestiti dallo stack
