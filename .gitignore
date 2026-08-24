@@ -1,0 +1,12 @@
+# Eseguibili e file oggetto
+*.exe
+*.o
+*.out
+*.class
+
+# Cartelle di output/build
+build/
+bin/
+dist/
+out/
+.vscode/
