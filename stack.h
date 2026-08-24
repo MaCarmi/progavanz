@@ -1,3 +1,9 @@
+/*
+ * Nome: [Il Tuo Nome]
+ * Cognome: [Il Tuo Cognome]
+ * Matricola: [La Tua Matricola]
+ */
+
 #ifndef STACK_H
 #define STACK_H
 
@@ -11,20 +17,20 @@ typedef struct {
     int capacity;      // Capacità massima attuale
 } Stack;
 
-// Funzioni di gestione ciclo di vita
+/* Ciclo di vita */
 Stack *stack_create(void);
 void stack_free(Stack *s);
 
-// Operazioni fondamentali dello stack (Forth Primitives)
+/* Operazioni base */
 int stack_push(Stack *s, Value *v);
 Value *stack_pop(Stack *s);
 Value *stack_peek(const Stack *s);
 
-// Utility e manipolazione Forth
-void stack_dup(Stack *s);
-void stack_drop(Stack *s);
-void stack_swap(Stack *s);
-void stack_rot(Stack *s);
+/* Manipolazioni Forth (d, D, s, o) */
+void stack_dup(Stack *s);   /* d */
+void stack_drop(Stack *s);  /* D */
+void stack_swap(Stack *s);  /* s */
+void stack_over(Stack *s);  /* o */
 void stack_print(const Stack *s);
 
 #endif // STACK_H

@@ -1,17 +1,26 @@
+/*
+ * Nome: [Il Tuo Nome]
+ * Cognome: [Il Tuo Cognome]
+ * Matricola: [La Tua Matricola]
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "tensor.h"
 
-
 Tensor *tensor_create(const size_t *shape, size_t ndim) {
-    if (ndim > MAX_DIM) return NULL;
+    if (ndim == 0 || ndim > MAX_DIM) return NULL;
 
     Tensor *t = (Tensor *)malloc(sizeof(Tensor));
     if (!t) return NULL;
 
     t->ndim = ndim;
     t->shape = (size_t *)malloc(ndim * sizeof(size_t));
+    if (!t->shape) {
+        free(t);
+        return NULL;
+    }
     
     t->total_size = 1;
     for (size_t i = 0; i < ndim; i++) {
@@ -20,7 +29,16 @@ Tensor *tensor_create(const size_t *shape, size_t ndim) {
     }
 
     t->data = (float *)malloc(t->total_size * sizeof(float));
+    if (!t->data) {
+        free(t->shape);
+        free(t);
+        return NULL;
+    }
+
     t->ref_count = 1;
+    t->mmap_base = NULL;
+    t->mmap_size = 0;
+    t->owns_data = 1;
 
     return t;
 }
@@ -33,7 +51,9 @@ void tensor_release(Tensor *t) {
     if (!t) return;
     t->ref_count--;
     if (t->ref_count <= 0) {
-        free(t->data);
+        if (t->owns_data && t->data) {
+            free(t->data);
+        }
         free(t->shape);
         free(t);
     }
@@ -53,17 +73,22 @@ void tensor_random(Tensor *t) {
     }
 }
 
+/* Stampa conforme alle specifiche: Tensor(shape=[...], data=[...]) */
 void tensor_print(const Tensor *t) {
     if (!t) return;
-    printf("Tensor(dim=%zu, size=%zu): [ ", t->ndim, t->total_size);
-    for (size_t i = 0; i < t->total_size; i++) {
-        printf("%.2f ", t->data[i]);
+    printf("Tensor(shape=[");
+    for (size_t i = 0; i < t->ndim; i++) {
+        printf("%zu%s", t->shape[i], (i < t->ndim - 1) ? " " : "");
     }
-    printf("]\n");
+    printf("], data=[");
+    for (size_t i = 0; i < t->total_size; i++) {
+        printf("%.2f%s", t->data[i], (i < t->total_size - 1) ? " " : "");
+    }
+    printf("])\n");
 }
 
 int tensor_reshape(Tensor *t, const size_t *new_shape, size_t new_ndim) {
-    if (!t || new_ndim > MAX_DIM) return 0;
+    if (!t || new_ndim == 0 || new_ndim > MAX_DIM) return 0;
     
     size_t new_total = 1;
     for (size_t i = 0; i < new_ndim; i++) {
@@ -94,6 +119,18 @@ void tensor_ravel(Tensor *t) {
     t->ndim = 1;
 }
 
+/* Operatore #: Genera un tensore 1D con le dimensioni di t */
+Tensor *tensor_get_shape(const Tensor *t) {
+    if (!t) return NULL;
+    size_t shape_dim = t->ndim;
+    Tensor *s = tensor_create(&shape_dim, 1);
+    if (!s) return NULL;
+    for (size_t i = 0; i < t->ndim; i++) {
+        s->data[i] = (float)t->shape[i];
+    }
+    return s;
+}
+
 /* --- IMPLEMENTAZIONE VALUE --- */
 
 Value *value_create_int(int val) {
@@ -115,6 +152,7 @@ Value *value_create_float(float val) {
 }
 
 Value *value_create_tensor(Tensor *t) {
+    if (!t) return NULL;
     Value *v = (Value *)malloc(sizeof(Value));
     if (!v) return NULL;
     v->type = VAL_TENSOR;
@@ -125,6 +163,7 @@ Value *value_create_tensor(Tensor *t) {
 }
 
 Value *value_create_string(const char *str) {
+    if (!str) return NULL;
     Value *v = (Value *)malloc(sizeof(Value));
     if (!v) return NULL;
     v->type = VAL_STRING;
@@ -153,8 +192,8 @@ void value_release(Value *v) {
 void value_print(const Value *v) {
     if (!v) return;
     switch (v->type) {
-        case VAL_INT:    printf("%d", v->as.i_val); break;
-        case VAL_FLOAT:  printf("%.2f", v->as.f_val); break;
+        case VAL_INT: printf("%d", v->as.i_val); break;
+        case VAL_FLOAT: printf("%f", v->as.f_val); break;
         case VAL_STRING: printf("\"%s\"", v->as.str); break;
         case VAL_TENSOR: tensor_print(v->as.tensor); break;
     }

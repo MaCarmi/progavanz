@@ -1,3 +1,9 @@
+/*
+ * Nome: [Il Tuo Nome]
+ * Cognome: [Il Tuo Cognome]
+ * Matricola: [La Tua Matricola]
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "stack.h"
@@ -29,7 +35,6 @@ void stack_free(Stack *s) {
 int stack_push(Stack *s, Value *v) {
     if (!s || !v) return 0;
 
-    // Ridimensionamento dinamico se lo stack è pieno
     if (s->top + 1 >= s->capacity) {
         int new_cap = s->capacity * 2;
         Value **tmp = (Value **)realloc(s->data, new_cap * sizeof(Value *));
@@ -55,7 +60,7 @@ Value *stack_peek(const Stack *s) {
     return s->data[s->top];
 }
 
-// Forth DUP: Duplica l'elemento in cima (incrementa ref_count via retain)
+/* Forth d (dup) */
 void stack_dup(Stack *s) {
     Value *top_val = stack_peek(s);
     if (!top_val) return;
@@ -63,7 +68,7 @@ void stack_dup(Stack *s) {
     stack_push(s, top_val);
 }
 
-// Forth DROP: Rimuove l'elemento in cima e decremente la memoria
+/* Forth D (drop) */
 void stack_drop(Stack *s) {
     Value *v = stack_pop(s);
     if (v) {
@@ -71,7 +76,7 @@ void stack_drop(Stack *s) {
     }
 }
 
-// Forth SWAP: Scambia i primi due elementi in cima allo stack
+/* Forth s (swap) */
 void stack_swap(Stack *s) {
     if (!s || s->top < 1) return;
     Value *tmp = s->data[s->top];
@@ -79,13 +84,12 @@ void stack_swap(Stack *s) {
     s->data[s->top - 1] = tmp;
 }
 
-// Forth ROT: Ruota i primi 3 elementi (portando il terzo in cima)
-void stack_rot(Stack *s) {
-    if (!s || s->top < 2) return;
-    Value *third = s->data[s->top - 2];
-    s->data[s->top - 2] = s->data[s->top - 1];
-    s->data[s->top - 1] = s->data[s->top];
-    s->data[s->top] = third;
+/* Forth o (over): ( b a -- b a b ) */
+void stack_over(Stack *s) {
+    if (!s || s->top < 1) return;
+    Value *second = s->data[s->top - 1];
+    value_retain(second);
+    stack_push(s, second);
 }
 
 void stack_print(const Stack *s) {
