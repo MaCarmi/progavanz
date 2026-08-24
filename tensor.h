@@ -1,7 +1,7 @@
 /*
- * Nome: [Il Tuo Nome]
- * Cognome: [Il Tuo Cognome]
- * Matricola: [La Tua Matricola]
+ * Nome: Sasa
+ * Cognome: Pahor
+ * Matricola: SM3201535
  */
 
 #ifndef TENSOR_H

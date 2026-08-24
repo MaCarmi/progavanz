@@ -1,7 +1,7 @@
 /*
- * Nome: [Il Tuo Nome]
- * Cognome: [Il Tuo Cognome]
- * Matricola: [La Tua Matricola]
+ * Nome: Sasa
+ * Cognome: Pahor
+ * Matricola: SM3201535
  */
 
 #include <stdio.h>
@@ -197,4 +197,4 @@ void value_print(const Value *v) {
         case VAL_STRING: printf("\"%s\"", v->as.str); break;
         case VAL_TENSOR: tensor_print(v->as.tensor); break;
     }
-}
+}x
