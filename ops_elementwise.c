@@ -10,12 +10,8 @@
 
 /*
 Verifica se due tensori hanno la stessa forma
-
-Riceve in input: a, b che sarebbero i tensori da confrontare
-
-Restituisce in output: 1 se hanno la stessa forma, 0 altrimenti 
 */
-static int same_shape(const Tensor *a, const Tensor *b){
+static int same_shape(const Tensor *a, const Tensor *b) {
     if (a == NULL || b == NULL) {
         return 0;
     }
@@ -32,44 +28,34 @@ static int same_shape(const Tensor *a, const Tensor *b){
 
 /*
 Crea un nuovo tensore con la stessa forma di un tensore dato
-
-Prende in input: a che è il tensore di riferimento
-
-Restituisce in output: un puntatore al nuovo tensore creato, o NULL in caso di errore
 */
-static Tensor *create_like(const Tensor *a) {
-    if (a == NULL) {
-        return NULL;
+static ErrorCode create_like(const Tensor *a, Tensor **out) {
+    if (a == NULL || out == NULL) {
+        return ERR_GENERIC;
     }
-    return tensor_create(a->shape, a->ndim);
+    
+    *out = tensor_create(a->shape, a->ndim);
+
+    if (*out == NULL)
+        return ERR_OUT_OF_MEMORY;
+
+    return ERR_NONE;
 }
 
-/*
-Somma due tensori elemento per elemento
-
-Prende in input: a, b che sono i tensori da sommare 
-Restituisce in output: out che è il puntatore al tensore risultato della sommma, che contiene a + b
-
-In particolare ritorna:
-TF_OK se l'operazione è andata a buon fine
-TF_ERR_NULL_ARGUMENT se uno dei puntatori passati è NULL
-TF_ERR_DIMENSION_MISMATCH se i tensori hanno forme diverse
-TF_ERR_ALLOCATION se si verifica un errore di allocazione
-*/
-TFStatus tf_add(const Tensor *a, const Tensor *b, Tensor **out)
+ErrorCode tf_add(const Tensor *a, const Tensor *b, Tensor **out)
 {
     if (a == NULL || b == NULL || out == NULL) {
-        return TF_ERR_NULL_ARGUMENT;
+        return ERR_GENERIC;
     }
 
     if (!same_shape(a, b)) {
-        return TF_ERR_DIMENSION_MISMATCH;
+        return ERR_DIM_MISMATCH;
     }
 
-    Tensor *result = create_like(a);
-
-    if (result == NULL) {
-        return TF_ERR_ALLOCATION;
+    Tensor *result = NULL;
+    ErrorCode err = create_like(a, &result);
+    if (err != ERR_NONE) {
+        return err;
     }
 
     #pragma omp parallel for
@@ -78,32 +64,23 @@ TFStatus tf_add(const Tensor *a, const Tensor *b, Tensor **out)
     }
 
     *out = result;
-
-    return TF_OK;
+    return ERR_NONE;
 }
 
-/*
-Sottrae due tesnori elemento per elemento
-
-Prende in input: a,b che sono i tensori con la stessa forma
-
-Restituisce in output: out che è il puntatore al tensore risultato della sottrazione, che contiene a - b
-*/
-
-TFStatus tf_sub(const Tensor *a, const Tensor *b, Tensor **out)
+ErrorCode tf_sub(const Tensor *a, const Tensor *b, Tensor **out)
 {
     if (a == NULL || b == NULL || out == NULL) {
-        return TF_ERR_NULL_ARGUMENT;
+        return ERR_GENERIC;
     }
 
     if (!same_shape(a, b)) {
-        return TF_ERR_DIMENSION_MISMATCH;
+        return ERR_DIM_MISMATCH;
     }
 
-    Tensor *result = create_like(a);
-
-    if (result == NULL) {
-        return TF_ERR_ALLOCATION;
+    Tensor *result = NULL;
+    ErrorCode err = create_like(a, &result);
+    if (err != ERR_NONE) {
+        return err;
     }
 
     #pragma omp parallel for
@@ -112,31 +89,23 @@ TFStatus tf_sub(const Tensor *a, const Tensor *b, Tensor **out)
     }
 
     *out = result;
-
-    return TF_OK;
+    return ERR_NONE;
 }
 
-/*
-Restituisce il prodotto di due tensori elemento per elemento
-
-Riceve in input: a, b che sono i tensori da moltiplicare
-Restituisce in output: out che è il puntatore al tensore risultato della moltiplicazione, che contiene a * b
-*/
-
-TFStatus tf_mul(const Tensor *a, const Tensor *b, Tensor **out)
+ErrorCode tf_mul(const Tensor *a, const Tensor *b, Tensor **out)
 {
     if (a == NULL || b == NULL || out == NULL) {
-        return TF_ERR_NULL_ARGUMENT;
+        return ERR_GENERIC;
     }
 
     if (!same_shape(a, b)) {
-        return TF_ERR_DIMENSION_MISMATCH;
+        return ERR_DIM_MISMATCH;
     }
 
-    Tensor *result = create_like(a);
-
-    if (result == NULL) {
-        return TF_ERR_ALLOCATION;
+    Tensor *result = NULL;
+    ErrorCode err = create_like(a, &result);
+    if (err != ERR_NONE) {
+        return err;
     }
 
     #pragma omp parallel for
@@ -145,31 +114,23 @@ TFStatus tf_mul(const Tensor *a, const Tensor *b, Tensor **out)
     }
 
     *out = result;
-
-    return TF_OK;
+    return ERR_NONE;
 }
 
-/*
-Confronta due tensori pelemento per elemento (equivale a <)
-
-Restituisce in input: a, b che sono i tensori da confrontare
-Restituisce in output: out che è il puntatore al tensore risultato della comparazione, che contiene 1.0f se a[i] < b[i] o 0.0f altrimenti
-*/
-
-TFStatus tf_less(const Tensor *a, const Tensor *b, Tensor **out)
+ErrorCode tf_less(const Tensor *a, const Tensor *b, Tensor **out)
 {
     if (a == NULL || b == NULL || out == NULL) {
-        return TF_ERR_NULL_ARGUMENT;
+        return ERR_GENERIC;
     }
 
     if (!same_shape(a, b)) {
-        return TF_ERR_DIMENSION_MISMATCH;
+        return ERR_DIM_MISMATCH;
     }
 
-    Tensor *result = create_like(a);
-
-    if (result == NULL) {
-        return TF_ERR_ALLOCATION;
+    Tensor *result = NULL;
+    ErrorCode err = create_like(a, &result);
+    if (err != ERR_NONE) {
+        return err;
     }
 
     #pragma omp parallel for
@@ -178,31 +139,23 @@ TFStatus tf_less(const Tensor *a, const Tensor *b, Tensor **out)
     }
 
     *out = result;
-
-    return TF_OK;
+    return ERR_NONE;
 }
 
-/*
-Confronta due tensori elemento per elemento (equivale a >)
-
-Restituisce in input: a, b che sono i tensori da confrontare
-Restituisce in output: out che è il puntatore al tensore risultato della comparazione, che contiene 1.0f se a[i] > b[i] o 0.0f altrimenti
-*/
-
-TFStatus tf_greater(const Tensor *a, const Tensor *b, Tensor **out)
+ErrorCode tf_greater(const Tensor *a, const Tensor *b, Tensor **out)
 {
     if (a == NULL || b == NULL || out == NULL) {
-        return TF_ERR_NULL_ARGUMENT;
+        return ERR_GENERIC;
     }
 
     if (!same_shape(a, b)) {
-        return TF_ERR_DIMENSION_MISMATCH;
+        return ERR_DIM_MISMATCH;
     }
 
-    Tensor *result = create_like(a);
-
-    if (result == NULL) {
-        return TF_ERR_ALLOCATION;
+    Tensor *result = NULL;
+    ErrorCode err = create_like(a, &result);
+    if (err != ERR_NONE) {
+        return err;
     }
 
     #pragma omp parallel for
@@ -211,31 +164,23 @@ TFStatus tf_greater(const Tensor *a, const Tensor *b, Tensor **out)
     }
 
     *out = result;
-
-    return TF_OK;
+    return ERR_NONE;
 }
 
-/*
-Confronta due tensori elemento per elemento (equivale a ==)
-
-Restituisce in input: a, b che sono i tensori da confrontare
-Restituisce in output: out che è il puntatore al tensore risultato della comparazione, che contiene 1.0f se a[i] == b[i] o 0.0f altrimenti
-*/
-
-TFStatus tf_equal(const Tensor *a, const Tensor *b, Tensor **out)
+ErrorCode tf_equal(const Tensor *a, const Tensor *b, Tensor **out)
 {
     if (a == NULL || b == NULL || out == NULL) {
-        return TF_ERR_NULL_ARGUMENT;
+        return ERR_GENERIC;
     }
 
     if (!same_shape(a, b)) {
-        return TF_ERR_DIMENSION_MISMATCH;
+        return ERR_DIM_MISMATCH;
     }
 
-    Tensor *result = create_like(a);
-
-    if (result == NULL) {
-        return TF_ERR_ALLOCATION;
+    Tensor *result = NULL;
+    ErrorCode err = create_like(a, &result);
+    if (err != ERR_NONE) {
+        return err;
     }
 
     #pragma omp parallel for
@@ -244,31 +189,23 @@ TFStatus tf_equal(const Tensor *a, const Tensor *b, Tensor **out)
     }
 
     *out = result;
-
-    return TF_OK;
+    return ERR_NONE;
 }
 
-/*
-Confronta due tensori elemento per elemento (equivale a &&)
-
-Restituisce in input: a, b che sono i tensori da confrontare
-Restituisce in output: out che è il puntatore al tensore risultato della comparazione, che contiene 1.0f se a[i] && b[i] o 0.0f altrimenti  
-*/
-
-TFStatus tf_and(const Tensor *a, const Tensor *b, Tensor **out)
+ErrorCode tf_and(const Tensor *a, const Tensor *b, Tensor **out)
 {
     if (a == NULL || b == NULL || out == NULL) {
-        return TF_ERR_NULL_ARGUMENT;
+        return ERR_GENERIC;
     }
 
     if (!same_shape(a, b)) {
-        return TF_ERR_DIMENSION_MISMATCH;
+        return ERR_DIM_MISMATCH;
     }
 
-    Tensor *result = create_like(a);
-
-    if (result == NULL) {
-        return TF_ERR_ALLOCATION;
+    Tensor *result = NULL;
+    ErrorCode err = create_like(a, &result);
+    if (err != ERR_NONE) {
+        return err;
     }
 
     #pragma omp parallel for
@@ -278,31 +215,23 @@ TFStatus tf_and(const Tensor *a, const Tensor *b, Tensor **out)
     }
 
     *out = result;
-
-    return TF_OK;
+    return ERR_NONE;
 }
 
-/*
-Confronta due tensori elemento per elemento (equivale a ||)
-
-Restituisce in input: a, b che sono i tensori da confrontare
-Restituisce in output: out che è il puntatore al tensore risultato della comparazione, che contiene 1.0f se a[i] || b[i] o 0.0f altrimenti  
-*/
-
-TFStatus tf_or(const Tensor *a, const Tensor *b, Tensor **out)
+ErrorCode tf_or(const Tensor *a, const Tensor *b, Tensor **out)
 {
     if (a == NULL || b == NULL || out == NULL) {
-        return TF_ERR_NULL_ARGUMENT;
+        return ERR_GENERIC;
     }
 
     if (!same_shape(a, b)) {
-        return TF_ERR_DIMENSION_MISMATCH;
+        return ERR_DIM_MISMATCH;
     }
 
-    Tensor *result = create_like(a);
-
-    if (result == NULL) {
-        return TF_ERR_ALLOCATION;
+    Tensor *result = NULL;
+    ErrorCode err = create_like(a, &result);
+    if (err != ERR_NONE) {
+        return err;
     }
 
     #pragma omp parallel for
@@ -312,26 +241,19 @@ TFStatus tf_or(const Tensor *a, const Tensor *b, Tensor **out)
     }
 
     *out = result;
-
-    return TF_OK;
+    return ERR_NONE;
 }
 
-/*
-Confronta un tensore elemento per elemento (equivale a !)
-
-Restituisce in input: a che è il tensore da confrontare
-Restituisce in output: out che è il puntatore al tensore risultato della comparazione, che contiene 1.0f se a[i] == 0.0f o 0.0f altrimenti
-*/
-TFStatus tf_not(const Tensor *a, Tensor **out)
+ErrorCode tf_not(const Tensor *a, Tensor **out)
 {
     if (a == NULL || out == NULL) {
-        return TF_ERR_NULL_ARGUMENT;
+        return ERR_GENERIC;
     }
 
-    Tensor *result = create_like(a);
-
-    if (result == NULL) {
-        return TF_ERR_ALLOCATION;
+    Tensor *result = NULL;
+    ErrorCode err = create_like(a, &result);
+    if (err != ERR_NONE) {
+        return err;
     }
 
     #pragma omp parallel for
@@ -340,35 +262,27 @@ TFStatus tf_not(const Tensor *a, Tensor **out)
     }
 
     *out = result;
-
-    return TF_OK;
+    return ERR_NONE;
 }
 
-/*
-Seleziona tra due tensori in base a una maschera
-
-Restituisce in input: a, b che sono i tensori da selezionare e mask che è la maschera di selezione
-Restituisce in output: out che è il puntatore al tensore risultato della selezione, che contiene a[i] se mask[i] == 1.0f o b[i] se mask[i] == 0.0f
-*/
-
-TFStatus tf_select(
+ErrorCode tf_select(
     const Tensor *b,
     const Tensor *a,
     const Tensor *mask,
     Tensor **out)
 {
     if (a == NULL || b == NULL || mask == NULL || out == NULL) {
-        return TF_ERR_NULL_ARGUMENT;
+        return ERR_GENERIC;
     }
 
     if (!same_shape(a, b) || !same_shape(a, mask)) {
-        return TF_ERR_DIMENSION_MISMATCH;
+        return ERR_DIM_MISMATCH;
     }
 
-    Tensor *result = create_like(a);
-
-    if (result == NULL) {
-        return TF_ERR_ALLOCATION;
+    Tensor *result = NULL;
+    ErrorCode err = create_like(a, &result);
+    if (err != ERR_NONE) {
+        return err;
     }
 
     #pragma omp parallel for
@@ -379,27 +293,19 @@ TFStatus tf_select(
     }
 
     *out = result;
-
-    return TF_OK;
+    return ERR_NONE;
 }
 
-
-/*
-ReLU elemento per elemento 
-
-Restituisce in input: a che è il tensore da confrontare
-Restituisce in output: out che è il puntatore al tensore risultato della ReLU, che contiene max(0, a[i])
-*/
-TFStatus tf_relu(const Tensor *a, Tensor **out)
+ErrorCode tf_relu(const Tensor *a, Tensor **out)
 {
     if (a == NULL || out == NULL) {
-        return TF_ERR_NULL_ARGUMENT;
+        return ERR_GENERIC;
     }
 
-    Tensor *result = create_like(a);
-
-    if (result == NULL) {
-        return TF_ERR_ALLOCATION;
+    Tensor *result = NULL;
+    ErrorCode err = create_like(a, &result);
+    if (err != ERR_NONE) {
+        return err;
     }
 
     #pragma omp parallel for
@@ -408,30 +314,23 @@ TFStatus tf_relu(const Tensor *a, Tensor **out)
     }
 
     *out = result;
-
-    return TF_OK;
+    return ERR_NONE;
 }
 
-/*
-Restituisce il minimo tra due tensori elemento per elemento
-
-Restituisce in input: a, b che sono i tensori da confrontare
-Restituisce in output: out che è il puntatore al tensore risultato della comparazione, che contiene min(a[i], b[i])
-*/
-TFStatus tf_min(const Tensor *a, const Tensor *b, Tensor **out)
+ErrorCode tf_min(const Tensor *a, const Tensor *b, Tensor **out)
 {
     if (a == NULL || b == NULL || out == NULL) {
-        return TF_ERR_NULL_ARGUMENT;
+        return ERR_GENERIC;
     }
 
     if (!same_shape(a, b)) {
-        return TF_ERR_DIMENSION_MISMATCH;
+        return ERR_DIM_MISMATCH;
     }
 
-    Tensor *result = create_like(a);
-
-    if (result == NULL) {
-        return TF_ERR_ALLOCATION;
+    Tensor *result = NULL;
+    ErrorCode err = create_like(a, &result);
+    if (err != ERR_NONE) {
+        return err;
     }
 
     #pragma omp parallel for
@@ -442,30 +341,23 @@ TFStatus tf_min(const Tensor *a, const Tensor *b, Tensor **out)
     }
 
     *out = result;
-
-    return TF_OK;
+    return ERR_NONE;
 }
 
-/*
-Restituisce il massimo tra due tensori elemento per elemento
-
-Restituisce in input: a, b che sono i tensori da confrontare
-Restituisce in output: out che è il puntatore al tensore risultato della comparazione, che contiene max(a[i], b[i])
-*/
-TFStatus tf_max(const Tensor *a, const Tensor *b, Tensor **out)
+ErrorCode tf_max(const Tensor *a, const Tensor *b, Tensor **out)
 {
     if (a == NULL || b == NULL || out == NULL) {
-        return TF_ERR_NULL_ARGUMENT;
+        return ERR_GENERIC;
     }
 
     if (!same_shape(a, b)) {
-        return TF_ERR_DIMENSION_MISMATCH;
+        return ERR_DIM_MISMATCH;
     }
 
-    Tensor *result = create_like(a);
-
-    if (result == NULL) {
-        return TF_ERR_ALLOCATION;
+    Tensor *result = NULL;
+    ErrorCode err = create_like(a, &result);
+    if (err != ERR_NONE) {
+        return err;
     }
 
     #pragma omp parallel for
@@ -476,29 +368,21 @@ TFStatus tf_max(const Tensor *a, const Tensor *b, Tensor **out)
     }
 
     *out = result;
-
-    return TF_OK;
+    return ERR_NONE;
 }
 
-/*
-Somma tutti gli elementi di un tensore
-
-Restituisce in input: a che è il tensore da sommare
-Restituisce in output: out che è il puntatore al tensore risultato della somma, che contiene la somma di tutti gli elementi di a
-*/
-TFStatus tf_sum(const Tensor *a, Tensor **out)
+ErrorCode tf_sum(const Tensor *a, Tensor **out)
 {
     if (a == NULL || out == NULL) {
-        return TF_ERR_NULL_ARGUMENT;
+        return ERR_GENERIC;
     }
 
     size_t shape[1] = {1};
-
-    Tensor *result = tensor_create(shape, 1);
-
-    if (result == NULL) {
-        return TF_ERR_ALLOCATION;
-    }
+    Tensor *result = NULL;
+    result = tensor_create(shape, 1);
+    
+    if (result == NULL)
+        return ERR_OUT_OF_MEMORY;
 
     float sum = 0.0f;
 
@@ -508,8 +392,7 @@ TFStatus tf_sum(const Tensor *a, Tensor **out)
     }
 
     result->data[0] = sum;
-
     *out = result;
 
-    return TF_OK;
+    return ERR_NONE;
 }

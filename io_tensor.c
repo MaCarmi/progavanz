@@ -18,9 +18,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-
 #define TENSOR_DATA_OFFSET 64
-
 
 typedef struct {
     int32_t shape[MAX_DIM];
@@ -28,12 +26,8 @@ typedef struct {
     off_t data_offset;
 } OnDiskTensor;
 
-
 /*
-Calcola il numero totale di elementi in un tensore dato il suo shape e il numero di dimensioni.
-
-Prende in input: shape che è un array con le dimensioni del tensore e ndim che è il numero di dimensioni
-Restituisce in output: il numero totale di elementi nel tensore
+ * Calcola il numero totale di elementi in un tensore dato il suo shape e il numero di dimensioni.
  */
 static size_t compute_total_size(const size_t *shape, size_t ndim)
 {
@@ -46,27 +40,23 @@ static size_t compute_total_size(const size_t *shape, size_t ndim)
     return total;
 }
 
-
 /*
-Salva un tensore in un file nel formato TensorForth.
-
-Prende in input: a che è il tensore da salvare e filename che è il percorso del file da creare
-Restituisce in output: TF_OK se l'operazione è andata a buon fine, altrimenti un codice di errore
+ * Salva un tensore in un file nel formato TensorForth.
  */
-TFStatus tf_write_tensor_file(const Tensor *a, const char *filename)
+ErrorCode tf_write_tensor_file(const Tensor *a, const char *filename)
 {
     if (a == NULL || filename == NULL) {
-        return TF_ERR_NULL_ARGUMENT;
+        return ERR_GENERIC;
     }
 
     if (a->ndim == 0 || a->ndim > MAX_DIM) {
-        return TF_ERR_DIMENSION_MISMATCH;
+        return ERR_DIM_MISMATCH;
     }
 
     FILE *fp = fopen(filename, "wb");
 
     if (fp == NULL) {
-        return TF_ERR_FILE;
+        return ERR_FILE_NOT_FOUND;
     }
 
     OnDiskTensor header;
@@ -84,7 +74,7 @@ TFStatus tf_write_tensor_file(const Tensor *a, const char *filename)
 
     if (fwrite(&header, sizeof(OnDiskTensor), 1, fp) != 1) {
         fclose(fp);
-        return TF_ERR_FILE;
+        return ERR_GENERIC;
     }
 
     /*
@@ -94,7 +84,7 @@ TFStatus tf_write_tensor_file(const Tensor *a, const char *filename)
 
     if (written_header > TENSOR_DATA_OFFSET) {
         fclose(fp);
-        return TF_ERR_INVALID_FORMAT;
+        return ERR_SYNTAX_ERROR;
     }
 
     unsigned char zero = 0;
@@ -102,58 +92,54 @@ TFStatus tf_write_tensor_file(const Tensor *a, const char *filename)
     for (size_t i = written_header; i < TENSOR_DATA_OFFSET; i++) {
         if (fwrite(&zero, sizeof(unsigned char), 1, fp) != 1) {
             fclose(fp);
-            return TF_ERR_FILE;
+            return ERR_GENERIC;
         }
     }
 
     if (fwrite(a->data, sizeof(float), a->total_size, fp) != a->total_size) {
         fclose(fp);
-        return TF_ERR_FILE;
+        return ERR_GENERIC;
     }
 
     if (fclose(fp) != 0) {
-        return TF_ERR_FILE;
+        return ERR_GENERIC;
     }
 
-    return TF_OK;
+    return ERR_NONE;
 }
 
-
 /*
-Legge un tensore da un file usando mmap.
-
-Prende in input: filename che è il percorso del file da leggere
-Restituisce in output: out che è il puntatore al tensore risultato della lettura, che contiene i valori del tensore letto
+ * Legge un tensore da un file usando mmap.
  */
-TFStatus tf_read_tensor_mmap(const char *filename, Tensor **out)
+ErrorCode tf_read_tensor_mmap(const char *filename, Tensor **out)
 {
     if (filename == NULL || out == NULL) {
-        return TF_ERR_NULL_ARGUMENT;
+        return ERR_GENERIC;
     }
 
     FILE *fp = fopen(filename, "rb");
 
     if (fp == NULL) {
-        return TF_ERR_FILE;
+        return ERR_FILE_NOT_FOUND;
     }
 
     int fd = fileno(fp);
 
     if (fd == -1) {
         fclose(fp);
-        return TF_ERR_FILE;
+        return ERR_FILE_NOT_FOUND;
     }
 
     struct stat st;
 
     if (fstat(fd, &st) != 0) {
         fclose(fp);
-        return TF_ERR_FILE;
+        return ERR_FILE_NOT_FOUND;
     }
 
     if (st.st_size < (off_t)TENSOR_DATA_OFFSET) {
         fclose(fp);
-        return TF_ERR_INVALID_FORMAT;
+        return ERR_SYNTAX_ERROR;
     }
 
     void *mapped = mmap(
@@ -167,7 +153,7 @@ TFStatus tf_read_tensor_mmap(const char *filename, Tensor **out)
 
     if (mapped == MAP_FAILED) {
         fclose(fp);
-        return TF_ERR_FILE;
+        return ERR_GENERIC;
     }
 
     /*
@@ -180,12 +166,12 @@ TFStatus tf_read_tensor_mmap(const char *filename, Tensor **out)
 
     if (header->ndim <= 0 || header->ndim > MAX_DIM) {
         munmap(mapped, (size_t)st.st_size);
-        return TF_ERR_INVALID_FORMAT;
+        return ERR_DIM_MISMATCH;
     }
 
     if (header->data_offset != TENSOR_DATA_OFFSET) {
         munmap(mapped, (size_t)st.st_size);
-        return TF_ERR_INVALID_FORMAT;
+        return ERR_SYNTAX_ERROR;
     }
 
     size_t ndim = (size_t)header->ndim;
@@ -194,14 +180,14 @@ TFStatus tf_read_tensor_mmap(const char *filename, Tensor **out)
 
     if (shape == NULL) {
         munmap(mapped, (size_t)st.st_size);
-        return TF_ERR_ALLOCATION;
+        return ERR_OUT_OF_MEMORY;
     }
 
     for (size_t i = 0; i < ndim; i++) {
         if (header->shape[i] <= 0) {
             free(shape);
             munmap(mapped, (size_t)st.st_size);
-            return TF_ERR_INVALID_FORMAT;
+            return ERR_SYNTAX_ERROR;
         }
 
         shape[i] = (size_t)header->shape[i];
@@ -215,7 +201,7 @@ TFStatus tf_read_tensor_mmap(const char *filename, Tensor **out)
     if ((size_t)st.st_size < required_size) {
         free(shape);
         munmap(mapped, (size_t)st.st_size);
-        return TF_ERR_INVALID_FORMAT;
+        return ERR_SYNTAX_ERROR;
     }
 
     Tensor *result = (Tensor *)malloc(sizeof(Tensor));
@@ -223,7 +209,7 @@ TFStatus tf_read_tensor_mmap(const char *filename, Tensor **out)
     if (result == NULL) {
         free(shape);
         munmap(mapped, (size_t)st.st_size);
-        return TF_ERR_ALLOCATION;
+        return ERR_OUT_OF_MEMORY;
     }
 
     result->shape = shape;
@@ -239,5 +225,5 @@ TFStatus tf_read_tensor_mmap(const char *filename, Tensor **out)
 
     *out = result;
 
-    return TF_OK;
+    return ERR_NONE;
 }

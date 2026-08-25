@@ -8,24 +8,23 @@
 #define OPS_MATRIX_H
 
 #include "tensor.h"
-#include "tf_status.h"
+#include "error.h"
 
 /*
  * Prodotto interno tra due vettori 1D.
- 
- Restituisce in input: a, b che sono i vettori da moltiplicare
- Restituisce in output: out che è il puntatore al tensore risultato della moltiplicazione, che contiene la somma di tutti gli elementi di a[i] * b[i]
+ *
+ * Restituisce in input: a, b che sono i vettori da moltiplicare
+ * Restituisce in output: out che è il puntatore al tensore risultato della moltiplicazione, che contiene la somma di tutti gli elementi di a[i] * b[i]
  */
-TFStatus tf_dot(const Tensor *a, const Tensor *b, Tensor **out);
-
+ErrorCode tf_dot(const Tensor *a, const Tensor *b, Tensor **out);
 
 /*
- Moltiplicazione tra matrici di 2D.
- 
-Restituisce in input: a, b che sono le matrici da moltiplicare
-Restituisce in output: out che è il puntatore al tensore risultato della moltiplicazione, che contiene la matrice prodotto di a e b
-La funzione richiede che il numero di colonne di a sia uguale al numero di righe di b, altrimenti restituisce un errore di dimensione
+ * Moltiplicazione tra matrici 2D.
+ *
+ * Restituisce in input: a, b che sono le matrici da moltiplicare
+ * Restituisce in output: out che è il puntatore al tensore risultato della moltiplicazione, che contiene la matrice prodotto di a e b
+ * La funzione richiede che il numero di colonne di a sia uguale al numero di righe di b, altrimenti restituisce un errore di dimensione
  */
-TFStatus tf_matmul(const Tensor *a, const Tensor *b, Tensor **out);
+ErrorCode tf_matmul(const Tensor *a, const Tensor *b, Tensor **out);
 
 #endif /* OPS_MATRIX_H */

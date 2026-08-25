@@ -3,16 +3,15 @@
  * Cognome: Pahor
  * Matricola: SM3201535
  */
- #include "ops_matrix.h"
+#include "ops_matrix.h"
 
 #include <stddef.h>
 
-
 /*
- Verifica se due tensori sono compatibili per il prodotto interno (dot product).
-
- Restituisce in input: a, b che sarebbero i tensori da confrontare
- Restituisce in output: 1 se sono compatibili, 0 altrimenti
+ * Verifica se due tensori sono compatibili per il prodotto interno (dot product).
+ *
+ * Restituisce in input: a, b che sarebbero i tensori da confrontare
+ * Restituisce in output: 1 se sono compatibili, 0 altrimenti
  */
 static int dot_compatible(const Tensor *a, const Tensor *b)
 {
@@ -31,30 +30,28 @@ static int dot_compatible(const Tensor *a, const Tensor *b)
     return 1;
 }
 
-
 /*
- Calcola il prodotto interno tra due vettori 1D.
-
- Restituisce in input: a, b che sono i vettori da moltiplicare
- Restituisce in output: out che è il puntatore al tensore risultato della moltiplicazione, che contiene la somma di tutti gli elementi di a[i] * b[i]
+ * Calcola il prodotto interno tra due vettori 1D.
+ *
+ * Restituisce in input: a, b che sono i vettori da moltiplicare
+ * Restituisce in output: out che è il puntatore al tensore risultato della moltiplicazione, che contiene la somma di tutti gli elementi di a[i] * b[i]
  */
-TFStatus tf_dot(const Tensor *a, const Tensor *b, Tensor **out)
+ErrorCode tf_dot(const Tensor *a, const Tensor *b, Tensor **out)
 {
     if (a == NULL || b == NULL || out == NULL) {
-        return TF_ERR_NULL_ARGUMENT;
+        return ERR_GENERIC;
     }
 
     if (!dot_compatible(a, b)) {
-        return TF_ERR_DIMENSION_MISMATCH;
+        return ERR_DIM_MISMATCH;
     }
 
     size_t shape[1] = {1};
+    Tensor *result = NULL;
+    result = tensor_create(shape, 1);
 
-    Tensor *result = tensor_create(shape, 1);
-
-    if (result == NULL) {
-        return TF_ERR_ALLOCATION;
-    }
+    if (result == NULL)
+        return ERR_OUT_OF_MEMORY;
 
     float sum = 0.0f;
 
@@ -64,17 +61,16 @@ TFStatus tf_dot(const Tensor *a, const Tensor *b, Tensor **out)
     }
 
     result->data[0] = sum;
-
     *out = result;
 
-    return TF_OK;
+    return ERR_NONE;
 }
 
 /*
- Verifica se due tensori sono compatibili per la moltiplicazione tra matrici.
-
- Restituisce in input: a, b che sarebbero i tensori da confrontare
- Restituisce in output: 1 se sono compatibili, 0 altrimenti
+ * Verifica se due tensori sono compatibili per la moltiplicazione tra matrici.
+ *
+ * Restituisce in input: a, b che sarebbero i tensori da confrontare
+ * Restituisce in output: 1 se sono compatibili, 0 altrimenti
  */
 static int matmul_compatible(const Tensor *a, const Tensor *b)
 {
@@ -93,21 +89,20 @@ static int matmul_compatible(const Tensor *a, const Tensor *b)
     return 1;
 }
 
-
 /*
-Calcola la moltiplicazione tra due matrici 2D.
-
-Restituisce in input: a, b che sono le matrici da moltiplicare
-Restituisce in output: out che è il puntatore al tensore risultato della moltiplicazione, che contiene la matrice prodotto di a e b
+ * Calcola la moltiplicazione tra due matrici 2D.
+ *
+ * Restituisce in input: a, b che sono le matrici da moltiplicare
+ * Restituisce in output: out che è il puntatore al tensore risultato della moltiplicazione, che contiene la matrice prodotto di a e b
  */
-TFStatus tf_matmul(const Tensor *a, const Tensor *b, Tensor **out)
+ErrorCode tf_matmul(const Tensor *a, const Tensor *b, Tensor **out)
 {
     if (a == NULL || b == NULL || out == NULL) {
-        return TF_ERR_NULL_ARGUMENT;
+        return ERR_GENERIC;
     }
 
     if (!matmul_compatible(a, b)) {
-        return TF_ERR_DIMENSION_MISMATCH;
+        return ERR_DIM_MISMATCH;
     }
 
     const size_t m = a->shape[0];
@@ -115,12 +110,11 @@ TFStatus tf_matmul(const Tensor *a, const Tensor *b, Tensor **out)
     const size_t p = b->shape[1];
 
     size_t result_shape[2] = {m, p};
+    Tensor *result = NULL;
+    result = tensor_create(result_shape, 2);
 
-    Tensor *result = tensor_create(result_shape, 2);
-
-    if (result == NULL) {
-        return TF_ERR_ALLOCATION;
-    }
+    if (result == NULL)
+        return ERR_OUT_OF_MEMORY;
 
     #pragma omp parallel for collapse(2)
     for (size_t i = 0; i < m; i++) {
@@ -138,5 +132,5 @@ TFStatus tf_matmul(const Tensor *a, const Tensor *b, Tensor **out)
 
     *out = result;
 
-    return TF_OK;
+    return ERR_NONE;
 }

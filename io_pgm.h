@@ -3,28 +3,29 @@
  * Cognome: Pahor
  * Matricola: SM3201535
  */
- 
+
 #ifndef IO_PGM_H
 #define IO_PGM_H
 
 #include "tensor.h"
-#include "tf_status.h"
+#include "error.h"
 
 /*
-Legge un'immagine PGM binaria P5 e la converte in un tensore 2D.
-
-Restituisce in input: filename che è il percorso del file PGM da leggere
-Restituisce in output: out che è il puntatore al tensore risultato della lettura, che contiene i valori dei pixel normalizzati in [0, 1]
+ * Legge un'immagine PGM binaria P5 e la converte in un tensore 2D.
+ *
+ * Parametri in input: filename - il percorso del file PGM da leggere
+ * Parametri in output: out - puntatore al tensore risultato della lettura
+ * Restituisce: ErrorCode (ERR_NONE in caso di successo)
  */
-TFStatus tf_read_pgm(const char *filename, Tensor **out);
-
+ErrorCode tf_read_pgm(const char *filename, Tensor **out);
 
 /*
-Scrive un tensore 2D in un file PGM binario P5.
-
-Restituisce in input: a che è il tensore da scrivere e filename che è il percorso del file PGM da creare
-Restituisce in output: TF_OK se l'operazione è andata a buon fine
+ * Scrive un tensore 2D in un file PGM binario P5.
+ *
+ * Parametri in input: a - il tensore da scrivere
+ *                     filename - il percorso del file PGM da creare
+ * Restituisce: ErrorCode (ERR_NONE in caso di successo)
  */
-TFStatus tf_write_pgm(const Tensor *a, const char *filename);
+ErrorCode tf_write_pgm(const Tensor *a, const char *filename);
 
 #endif /* IO_PGM_H */

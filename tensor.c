@@ -3,6 +3,8 @@
  * Cognome: Pahor
  * Matricola: SM3201535
  */
+ 
+#define _POSIX_C_SOURCE 200809L
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -197,4 +199,4 @@ void value_print(const Value *v) {
         case VAL_STRING: printf("\"%s\"", v->as.str); break;
         case VAL_TENSOR: tensor_print(v->as.tensor); break;
     }
-}x
+}

@@ -7,7 +7,6 @@
 
 #include <stddef.h>
 
-
 /*
 Verifica se due tensori sono compatibili per la convoluzione 2D.
 
@@ -27,20 +26,19 @@ static int conv2d_compatible(const Tensor *a, const Tensor *k)
     return 1;
 }
 
-
 /*
 Calcola la convoluzione 2D tra due tensori 2D.
 Restituisce in input: a, k che sono i tensori da convolvere
 Restituisce in output: out che è il puntatore al tensore risultato della convoluzione, che contiene la convoluzione di a e k
  */
-TFStatus tf_conv2d(const Tensor *a, const Tensor *k, Tensor **out)
+ErrorCode tf_conv2d(const Tensor *a, const Tensor *k, Tensor **out)
 {
     if (a == NULL || k == NULL || out == NULL) {
-        return TF_ERR_NULL_ARGUMENT;
+        return ERR_GENERIC;
     }
 
     if (!conv2d_compatible(a, k)) {
-        return TF_ERR_DIMENSION_MISMATCH;
+        return ERR_DIM_MISMATCH;
     }
 
     const size_t height = a->shape[0];
@@ -54,11 +52,11 @@ TFStatus tf_conv2d(const Tensor *a, const Tensor *k, Tensor **out)
 
     size_t result_shape[2] = {height, width};
 
-    Tensor *result = tensor_create(result_shape, 2);
+    Tensor *result = NULL;
+    result = tensor_create(result_shape, 2);
 
-    if (result == NULL) {
-        return TF_ERR_ALLOCATION;
-    }
+    if (result == NULL)
+        return ERR_OUT_OF_MEMORY;
 
     #pragma omp parallel for collapse(2)
     for (size_t y = 0; y < height; y++) {
@@ -95,5 +93,5 @@ TFStatus tf_conv2d(const Tensor *a, const Tensor *k, Tensor **out)
 
     *out = result;
 
-    return TF_OK;
+    return ERR_NONE;
 }

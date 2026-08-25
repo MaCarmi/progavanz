@@ -12,10 +12,10 @@
 #include <string.h>
 
 /*
-Converte un valore float in un valore unsigned char per la scrittura in un file PGM binario.
+ Converte un valore float in un valore unsigned char per la scrittura in un file PGM binario.
 
-Restituisce in input: x che è il valore float da convertire
-Restituisce in output: il valore unsigned char corrispondente, con valori limitati a [0, 255]
+ Restituisce in input: x che è il valore float da convertire
+ Restituisce in output: il valore unsigned char corrispondente, con valori limitati a [0, 255]
  */
 static unsigned char float_to_pixel(float x)
 {
@@ -30,21 +30,20 @@ static unsigned char float_to_pixel(float x)
     return (unsigned char)(x * 255.0f + 0.5f);
 }
 
-
 /*
-Scrive un tensore 2D in un file PGM binario P5.
+ Scrive un tensore 2D in un file PGM binario P5.
 
-Restituisce in input: a che è il tensore da scrivere e filename che è il percorso del file PGM da creare
-Restituisce in output: TF_OK se l'operazione è andata a buon fine, altrimenti un codice di errore
+ Restituisce in input: a che è il tensore da scrivere e filename che è il percorso del file PGM da creare
+ Restituisce in output: ERR_NONE se l'operazione è andata a buon fine, altrimenti un codice di errore
  */
-TFStatus tf_write_pgm(const Tensor *a, const char *filename)
+ErrorCode tf_write_pgm(const Tensor *a, const char *filename)
 {
     if (a == NULL || filename == NULL) {
-        return TF_ERR_NULL_ARGUMENT;
+        return ERR_GENERIC;
     }
 
     if (a->ndim != 2) {
-        return TF_ERR_DIMENSION_MISMATCH;
+        return ERR_DIM_MISMATCH;
     }
 
     const size_t height = a->shape[0];
@@ -53,12 +52,12 @@ TFStatus tf_write_pgm(const Tensor *a, const char *filename)
     FILE *fp = fopen(filename, "wb");
 
     if (fp == NULL) {
-        return TF_ERR_FILE;
+        return ERR_FILE_NOT_FOUND;
     }
 
     if (fprintf(fp, "P5\n%zu %zu\n255\n", width, height) < 0) {
         fclose(fp);
-        return TF_ERR_FILE;
+        return ERR_FILE_NOT_FOUND;
     }
 
     unsigned char *pixels =
@@ -66,7 +65,7 @@ TFStatus tf_write_pgm(const Tensor *a, const char *filename)
 
     if (pixels == NULL) {
         fclose(fp);
-        return TF_ERR_ALLOCATION;
+        return ERR_OUT_OF_MEMORY;
     }
 
     for (size_t i = 0; i < a->total_size; i++) {
@@ -84,12 +83,12 @@ TFStatus tf_write_pgm(const Tensor *a, const char *filename)
 
     if (written != a->total_size) {
         fclose(fp);
-        return TF_ERR_FILE;
+        return ERR_FILE_NOT_FOUND;
     }
 
     if (fclose(fp) != 0) {
-        return TF_ERR_FILE;
+        return ERR_FILE_NOT_FOUND;
     }
 
-    return TF_OK;
+    return ERR_NONE;
 }
