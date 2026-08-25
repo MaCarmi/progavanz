@@ -1,6 +1,7 @@
 /*
-Marco Carmignano
-SM3201526
+ * Nome: Sasa
+ * Cognome: Pahor
+ * Matricola: SM3201535
  */
 
 #ifndef IO_TENSOR_H

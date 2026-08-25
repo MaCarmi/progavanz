@@ -1,8 +1,9 @@
 /*
-Marco Carmignano
-SM3201526
-*/
-
+ * Nome: Sasa
+ * Cognome: Pahor
+ * Matricola: SM3201535
+ */
+ 
 #ifndef IO_PGM_H
 #define IO_PGM_H
 

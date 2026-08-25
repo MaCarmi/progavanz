@@ -1,8 +1,8 @@
 /*
-Marco Carmignano
-SM3201526
+ * Nome: Sasa
+ * Cognome: Pahor
+ * Matricola: SM3201535
  */
-
 #include "ops_convolution.h"
 
 #include <stddef.h>
