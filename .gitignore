@@ -16,3 +16,4 @@ tests/out_*.pgm
 tests/out_*.tft
 tests/project_C-2.txt
 examples/*.pgm
+tf_status.h
