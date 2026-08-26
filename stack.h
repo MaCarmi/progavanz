@@ -27,10 +27,10 @@ Value *stack_pop(Stack *s);
 Value *stack_peek(const Stack *s);
 
 /* Manipolazioni Forth (d, D, s, o) */
-void stack_dup(Stack *s);   /* d */
+int stack_dup(Stack *s);    /* d */
 void stack_drop(Stack *s);  /* D */
 void stack_swap(Stack *s);  /* s */
-void stack_over(Stack *s);  /* o */
+int stack_over(Stack *s);   /* o */
 void stack_print(const Stack *s);
 
 #endif // STACK_H

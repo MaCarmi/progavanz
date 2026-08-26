@@ -11,6 +11,10 @@
 #include <string.h>
 #include "tensor.h"
 
+#ifndef _WIN32
+#include <sys/mman.h>
+#endif
+
 Tensor *tensor_create(const size_t *shape, size_t ndim) {
     if (ndim == 0 || ndim > MAX_DIM) return NULL;
 
@@ -56,6 +60,11 @@ void tensor_release(Tensor *t) {
         if (t->owns_data && t->data) {
             free(t->data);
         }
+#ifndef _WIN32
+        else if (!t->owns_data && t->mmap_base) {
+            munmap(t->mmap_base, t->mmap_size);
+        }
+#endif
         free(t->shape);
         free(t);
     }

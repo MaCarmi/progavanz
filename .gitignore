@@ -10,3 +10,9 @@ bin/
 dist/
 out/
 .vscode/
+
+# File generati dai test
+tests/out_*.pgm
+tests/out_*.tft
+tests/project_C-2.txt
+examples/*.pgm

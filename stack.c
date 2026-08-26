@@ -61,11 +61,18 @@ Value *stack_peek(const Stack *s) {
 }
 
 /* Forth d (dup) */
-void stack_dup(Stack *s) {
+int stack_dup(Stack *s) {
     Value *top_val = stack_peek(s);
-    if (!top_val) return;
+    if (!top_val) return 0;
+
     value_retain(top_val);
-    stack_push(s, top_val);
+
+    if (!stack_push(s, top_val)) {
+        value_release(top_val);
+        return 0;
+    }
+
+    return 1;
 }
 
 /* Forth D (drop) */
@@ -85,11 +92,19 @@ void stack_swap(Stack *s) {
 }
 
 /* Forth o (over): ( b a -- b a b ) */
-void stack_over(Stack *s) {
-    if (!s || s->top < 1) return;
+int stack_over(Stack *s) {
+    if (!s || s->top < 1) return 0;
+
     Value *second = s->data[s->top - 1];
+
     value_retain(second);
-    stack_push(s, second);
+
+    if (!stack_push(s, second)) {
+        value_release(second);
+        return 0;
+    }
+
+    return 1;
 }
 
 void stack_print(const Stack *s) {

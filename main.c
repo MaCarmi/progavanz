@@ -79,9 +79,13 @@ static void push_tensor(Stack *stack, Tensor *t)
 
     v = value_create_tensor(t);
 
-    if (v == NULL)
+    if (v == NULL) {
+        tensor_release(t);
         error_fatal(ERR_OUT_OF_MEMORY,
                     "impossibile creare il Value del tensore");
+    }
+
+    tensor_release(t);
 
     if (!stack_push(stack, v)) {
         value_release(v);
@@ -213,13 +217,47 @@ static void execute_binary_tensor_op(
     a = require_tensor(va);
     b = require_tensor(vb);
 
-    err = operation(b, a, &result);
+    err = operation(a, b, &result);
 
     value_release(va);
     value_release(vb);
 
     if (err != ERR_NONE)
         error_fatal(err, "errore durante l'operazione sui tensori");
+
+    push_tensor(stack, result);
+}
+
+
+/*
+ * Operazione di convoluzione:
+ *
+ * ( a k -- conv(a,k) )
+ */
+static void execute_conv2d(Stack *stack)
+{
+    Value *v_kernel;
+    Value *v_tensor;
+    Tensor *kernel;
+    Tensor *tensor;
+    Tensor *result = NULL;
+    ErrorCode err;
+
+    require_stack(stack, 2);
+
+    v_kernel = stack_pop(stack);
+    v_tensor = stack_pop(stack);
+
+    kernel = require_tensor(v_kernel);
+    tensor = require_tensor(v_tensor);
+
+    err = tf_conv2d(tensor, kernel, &result);
+
+    value_release(v_kernel);
+    value_release(v_tensor);
+
+    if (err != ERR_NONE)
+        error_fatal(err, "errore durante la convoluzione");
 
     push_tensor(stack, result);
 }
@@ -653,7 +691,7 @@ static void execute_operator(Stack *stack, const char *op)
         execute_binary_tensor_op(stack, tf_and);
     }
 
-    else if (strcmp(op, "|") == 0) {
+    else if (strcmp(op, "\\|") == 0) {
         execute_binary_tensor_op(stack, tf_or);
     }
 
@@ -674,7 +712,7 @@ static void execute_operator(Stack *stack, const char *op)
     }
 
     else if (strcmp(op, "c") == 0) {
-        execute_binary_tensor_op(stack, tf_conv2d);
+        execute_conv2d(stack);
     }
 
     else if (strcmp(op, "R") == 0) {
@@ -758,7 +796,10 @@ static void execute_operator(Stack *stack, const char *op)
      */
     else if (strcmp(op, "d") == 0) {
         require_stack(stack, 1);
-        stack_dup(stack);
+
+        if (!stack_dup(stack))
+            error_fatal(ERR_OUT_OF_MEMORY,
+                        "impossibile duplicare il valore sullo stack");
     }
 
     else if (strcmp(op, "D") == 0) {
@@ -773,7 +814,10 @@ static void execute_operator(Stack *stack, const char *op)
 
     else if (strcmp(op, "o") == 0) {
         require_stack(stack, 2);
-        stack_over(stack);
+
+        if (!stack_over(stack))
+            error_fatal(ERR_OUT_OF_MEMORY,
+                        "impossibile eseguire over sullo stack");
     }
 
     /*
